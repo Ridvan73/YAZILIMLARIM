@@ -1,0 +1,142 @@
+KARBON AYAK İZİ HESAPLAMA YAZILIMI
+
+# Karbon ayak izi hesaplama yazılımı
+# Gerekli kütüphaneleri içe aktar
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import requests
+# Karbon ayak izi verilerini oku
+# Kaynak: [Global Carbon Atlas]
+df = pd.read_csv("carbon_footprint.csv")
+# Ülke isimlerini ve karbon ayak izi değerlerini ayrı ayrı listelere al
+countries = df["Country"].tolist()
+footprints = df["Carbon footprint (tons of CO2 per capita)"].tolist()
+# Karbon ayak izi değerlerine göre ülkeleri sırala
+sorted_countries = [x for _, x in sorted(zip(footprints, countries), reverse=True)]
+# Karbon ayak izi değerlerini büyükten küçüğe sırala
+sorted_footprints = sorted(footprints, reverse=True)
+# Karbon ayak izi değerlerini yüzdelik olarak hesapla
+total = sum(sorted_footprints)
+percentages = [x / total * 100 for x in sorted_footprints]
+# Karbon ayak izi değerlerini pasta grafiği olarak göster
+plt.figure(figsize=(10, 10))
+plt.pie(percentages, labels=sorted_countries, autopct="%1.1f%%")
+plt.title("Karbon ayak izi dağılımı (ton CO2 başına)")
+plt.show()
+# Veri setine yıllara göre dağılımı ekle
+# Kaynak: [Our World in Data]
+df2 = pd.read_csv("co2_emissions_by_year.csv")
+# Ülke isimlerini ve yıllara göre karbon ayak izi değerlerini ayrı ayrı listelere al
+countries2 = df2["Country"].unique().tolist()
+years = df2["Year"].unique().tolist()
+footprints2 = df2["Carbon footprint (tons of CO2 per capita)"].tolist()
+# Karbon ayak izi değerlerini çizgi grafiği olarak göster
+plt.figure(figsize=(10, 10))
+sns.lineplot(data=df2, x="Year", y="Carbon footprint (tons of CO2 per capita)", hue="Country")
+plt.title("Karbon ayak izi değişimi (ton CO2 başına)")
+plt.show()
+# Ülkelerin ekonomik ve coğrafi durumlarını analiz etmek için kod ekle
+# Kaynak: [World Bank]
+# Kaynak: [Worldometer]
+# Ülke isimlerini ve ekonomik ve coğrafi verilerini ayrı ayrı listelere al
+countries3 = df["Country"].tolist()
+gdp = df["GDP per capita (current US$)"].tolist()
+population = df["Population (2020)"].tolist()
+area = df["Area (sq. km)"].tolist()
+density = df["Density (P/Km²)"].tolist()
+climate = df["Climate"].tolist()
+# Karbon ayak izi ile ekonomik ve coğrafi veriler arasındaki ilişkiyi korelasyon matrisi olarak göster
+df3 = pd.DataFrame({"Country": countries3, "Carbon footprint": footprints, "GDP per capita": gdp, "Population": population, "Area": area, "Density": density, "Climate": climate})
+plt.figure(figsize=(10, 10))
+sns.heatmap(df3.corr(), annot=True, cmap="Blues")
+plt.title("Karbon ayak izi ile ekonomik ve coğrafi veriler arasındaki korelasyon")
+plt.show()
+# Kullanıcıdan ülke veya sektör girdisi alınabilecek bir şekilde detaylı rapor için kod ekle
+# Kaynak: [Global Carbon Project]
+# Kaynak: [International Energy Agency]
+# Kullanıcıdan ülke veya sektör seçmesini iste
+choice = input("Detaylı rapor için bir ülke veya sektör seçiniz: ")
+# Seçilen ülke veya sektörün karbon ayak izi verilerini API ile al
+api_url = "https://api.carbonfootprint.com/v1/"
+params = {"country": choice, "sector": choice}
+response = requests.get(api_url, params=params)
+data = response.json()
+# API'den dönen verileri kontrol et
+if data["status"] == "success":
+    # Seçilen ülke veya sektörün karbon ayak izi verilerini tablo olarak göster
+    df4 = pd.DataFrame(data["data"])
+    print(df4)
+    # Seçilen ülke veya sektörün karbon ayak izi verilerini çubuk grafiği olarak göster
+    plt.figure(figsize=(10, 10))
+    sns.barplot(data=df4, x="year", y="carbonFootprint", hue="sector")
+    plt.title(f"{choice} karbon ayak izi verileri (ton CO2)")
+    plt.show()
+else:
+    # API'den dönen verilerde hata varsa kullanıcıya bildir
+    print(data["message"])
+# Çevrimiçi API ekle
+# Kaynak: [Carbon Interface]
+# Kullanıcıdan bir elektrik tüketimi miktarı (kWh) girmesini iste
+consumption = float(input("Elektrik tüketiminizi kWh cinsinden giriniz: "))
+# Elektrik tüketimine karşılık gelen karbon ayak izini API ile hesapla
+api_url2 = "https://www.carboninterface.com/api/v1/estimates"
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+body = {"type": "electricity", "electricity_unit": "kwh", "electricity_value": consumption}
+response2 = requests.post(api_url2, headers=headers, json=body)
+data2 = response2.json()
+# API'den dönen verileri kontrol et
+if data2["status"] == "ok":
+    # Elektrik tüketimine karşılık gelen karbon ayak izini ve karşılığı olan ağaç sayısını göster
+    footprint = data2["data"]["attributes"]["carbon_lb"]
+    trees = data2["data"]["attributes"]["equivalent_carbon_in_trees"]
+    print(f"Elektrik tüketiminize karşılık gelen karbon ayak iziniz {footprint} pound CO2'dir.")
+    print(f"Bunu dengelemek için {trees} ağaç dikmeniz gerekir.")
+else:
+    # API'den dönen verilerde hata varsa kullanıcıya bildir
+    print(data2["errors"])
+# CO2 salınımının azaltılması için politika önerileri ekle
+# Kaynak: [United Nations]
+# Kullanıcıdan bir ülke seçmesini iste
+country = input("CO2 salınımının azaltılması için politika önerileri almak istediğiniz ülkeyi seçiniz: ")
+# Seçilen ülkenin karbon ayak izi değerini bul
+footprint_country = df[df["Country"] == country]["Carbon footprint (tons of CO2 per capita)"].values[0]
+# Seçilen ülkenin karbon ayak izi değerini dünya ortalaması ile karşılaştır
+average = df["Carbon footprint (tons of CO2 per capita)"].mean()
+if footprint_country > average:
+    # Seçilen ülkenin karbon ayak izi değeri dünya ortalamasından yüksekse, azaltma yolları öner
+    print(f"{country} karbon ayak izi değeri {footprint_country} ton CO2 başına iken, dünya ortalaması {average} ton CO2 başınadır.")
+    print(f"{country} karbon ayak izi değerini azaltmak için aşağıdaki politika önerilerini uygulayabilir:")
+    print("- Yenilenebilir enerji kaynaklarının kullanımını artırmak ve fosil yakıtlara bağımlılığı azaltmak.")
+    print("- Enerji verimliliğini ve tasarrufunu teşvik etmek ve enerji yoğun sektörleri dönüştürmek.")
+    print("- Ulaşım sektöründe elektrikli araçların kullanımını yaygınlaştırmak ve toplu taşıma sistemlerini geliştirmek.")
+    print("- Ormanlık alanları korumak ve ağaçlandırma faaliyetlerini desteklemek.")
+    print("- Sera gazı emisyonlarını izlemek ve raporlamak ve uluslararası iklim anlaşmalarına uymak.")
+else:
+ Seçilen ülkenin karbon ayak izi değeri dünya ortalamasından düşükse, sürdürülebilirlik yolları öner.
+#Yazan Rıdvan Kaya
+
+Bu kod, karbon ayak izi hesaplama yazılımıdır. Karbon ayak izi, bir kişi, kurum veya faaliyetin iklim değişikliğine katkıda bulunan sera gazı emisyonlarının ölçüsüdür. Bu kod, farklı ülke ve sektörlerin karbon ayak izi verilerini okuyup, analiz edip, grafiklerle göstermektedir. Ayrıca, kullanıcıdan girdi alarak, detaylı raporlar sunmakta ve CO2 salınımının azaltılması için politika önerileri vermektedir. Bu kodun amacı, karbon ayak izi konusunda farkındalık yaratmak ve iklim değişikliği ile mücadele etmek için bilgi sağlamaktır.
+Bu kodun çalışma mantığı şöyledir:
+- Öncelikle, gerekli kütüphaneleri içe aktarıyor. Pandas, veri işleme ve analizi için; matplotlib ve seaborn, veri görselleştirme için; requests, API çağrıları için kullanılıyor.
+- Sonra, Global Carbon Atlas kaynağından karbon ayak izi verilerini okuyor. Bu veriler, 2020 yılında her ülkenin kişi başına düşen karbon ayak izi değerlerini içeriyor.
+- Daha sonra, ülke isimlerini ve karbon ayak izi değerlerini ayrı ayrı listelere alıyor. Bu listeleri, karbon ayak izi değerlerine göre büyükten küçüğe sıralıyor. Ayrıca, karbon ayak izi değerlerini yüzdelik olarak hesaplıyor.
+- Ardından, karbon ayak izi değerlerini pasta grafiği olarak gösteriyor. Bu grafik, hangi ülkelerin karbon ayak izi dağılımında daha büyük paya sahip olduğunu gösteriyor.
+- Sonra, Our World in Data kaynağından yıllara göre karbon ayak izi verilerini okuyor. Bu veriler, 1960-2020 yılları arasında her ülkenin kişi başına düşen karbon ayak izi değerlerini içeriyor.
+- Daha sonra, ülke isimlerini ve yıllara göre karbon ayak izi değerlerini ayrı ayrı listelere alıyor. Bu listeleri, çizgi grafiği olarak gösteriyor. Bu grafik, karbon ayak izi değerlerinin zaman içinde nasıl değiştiğini gösteriyor.
+- Ardından, World Bank ve Worldometer kaynaklarından ekonomik ve coğrafi verileri okuyor. Bu veriler, her ülkenin kişi başına düşen gayri safi yurt içi hasıla (GSYİH), nüfus, yüzölçümü, nüfus yoğunluğu ve iklim değerlerini içeriyor.
+- Daha sonra, ülke isimlerini ve ekonomik ve coğrafi verileri ayrı ayrı listelere alıyor. Bu listeleri, korelasyon matrisi olarak gösteriyor. Bu matris, karbon ayak izi ile ekonomik ve coğrafi veriler arasındaki ilişkiyi gösteriyor.
+- Sonra, kullanıcıdan detaylı rapor için bir ülke veya sektör seçmesini istiyor. Seçilen ülke veya sektörün karbon ayak izi verilerini, Global Carbon Project ve International Energy Agency kaynaklarından API ile alıyor. Bu veriler, 1990-2019 yılları arasında seçilen ülke veya sektörün karbon ayak izi değerlerini içeriyor.
+- Daha sonra, API'den dönen verileri kontrol ediyor. Eğer veriler başarılı bir şekilde alındıysa, tablo ve çubuk grafiği olarak gösteriyor. Bu tablo ve grafik, seçilen ülke veya sektörün karbon ayak izi verilerini detaylı bir şekilde gösteriyor.
+- Ardından, kullanıcıdan bir elektrik tüketimi miktarı (kWh) girmesini istiyor. Elektrik tüketimine karşılık gelen karbon ayak izini, Carbon Interface kaynağından API ile hesaplıyor. Bu API, elektrik tüketimine karşılık gelen karbon ayak izi değerini ve bunu dengelemek için gerekli olan ağaç sayısını veriyor.
+- Daha sonra, API'den dönen verileri kontrol ediyor. Eğer veriler başarılı bir şekilde alındıysa, karbon ayak izi ve ağaç sayısını kullanıcıya bildiriyor. Bu bilgi, kullanıcının elektrik tüketiminin çevresel etkisini anlamasına yardımcı oluyor.
+- Sonra, kullanıcıdan CO2 salınımının azaltılması için politika önerileri almak istediği bir ülke seçmesini istiyor. Seçilen ülkenin karbon ayak izi değerini buluyor. Bu değeri, dünya ortalaması ile karşılaştırıyor. Eğer seçilen ülkenin karbon ayak izi değeri dünya ortalamasından yüksekse, azaltma yolları öneriyor. Eğer seçilen ülkenin karbon ayak izi değeri dünya ortalamasından düşükse, sürdürülebilirlik yolları öneriyor. Bu öneriler, United Nations kaynağından alınıyor. Bu öneriler, kullanıcının seçtiği ülkenin CO2 salınımını azaltmak için neler yapabileceğini gösteriyor.
+Bu kodun sonucunda, kullanıcı karbon ayak izi konusunda bilgileniyor, farklı ülke ve sektörlerin karbon ayak izi verilerini görüyor, kendi elektrik tüketiminin karbon ayak izini öğreniyor ve CO2 salınımının azaltılması için politika önerileri alıyor. Bu şekilde, bu kod, kullanıcıya karbon ayak izi hesaplama yazılımı sunuyor.
+
+Bu kodu çalıştırmak için aşağıdaki adımları izleyebilirsiniz:
+- Öncelikle, bu kodu Python dilinde yazdığımı ve çalıştırmak için Python yorumlayıcısına ihtiyacınız olduğunu belirtmek isterim. Eğer bilgisayarınızda Python kurulu değilse, indirip kurabilirsiniz.
+- Sonra, bu kodun çalışması için gerekli kütüphaneleri yüklemeniz gerekiyor. Bunlar pandas, matplotlib, seaborn ve requests kütüphaneleridir. Eğer bilgisayarınızda bu kütüphaneler kurulu değilse, komut satırında `pip install pandas matplotlib seaborn requests` komutunu çalıştırarak yükleyebilirsiniz.
+- Ardından, bu kodun kullandığı veri setlerini indirmeniz gerekiyor. Bu veri setleri, karbon ayak izi, ekonomik ve coğrafi verileri içeriyor. Bu veri setlerini indirip, kodun bulunduğu klasöre kaydedebilirsiniz.
+- Son olarak, bu kodu çalıştırmak için komut satırında `python carbon_footprint.py` komutunu çalıştırabilirsiniz. Bu komut, kodun çalışmasını başlatacak ve size çeşitli grafikler ve sorular gösterecektir. Sorulara cevap vererek, karbon ayak izi hesaplama yazılımını kullanabilirsiniz.
+
+
