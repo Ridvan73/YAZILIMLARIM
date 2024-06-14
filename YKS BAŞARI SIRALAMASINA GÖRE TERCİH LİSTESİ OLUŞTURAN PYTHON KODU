@@ -1,0 +1,51 @@
+# Örnek bölüm sıralamaları
+bolumler = {
+    'Mühendislik': 40000,
+    'Hukuk': 15000,
+    'Edebiyat': 50000,
+    'Tıp': 10000,
+    'İşletme': 60000,
+    'Mimarlık': 30000,
+    'Bilgisayar Bilimleri': 20000,
+    # Daha fazla bölüm ekleyebilirsiniz...
+}
+
+def tercih_listesi_olustur(kisisel_siralama):
+    tercihler = []
+    # İlk 3 tercih için %10 daha iyi sıralama
+    for i in range(1, 4):
+        tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.10))
+    # 4. tercih için %15 daha iyi sıralama
+    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.15))
+    # 5. tercih için %20 daha iyi sıralama
+    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.20))
+    # 6. tercih için %30 daha iyi sıralama
+    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.30))
+    # 7'den 13'e kadar tercihler için %10 daha iyi sıralama
+    for i in range(7, 14):
+        tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.10))
+    # 14'ten 19'a kadar tercihler için %10 daha kötü sıralama
+    for i in range(14, 20):
+        tercihler.append(kisisel_siralama + int(kisisel_siralama * 0.10))
+    # 20'den 24'e kadar tercihler için %10-%40 daha kötü sıralama
+    for i in range(20, 25):
+        tercihler.append(kisisel_siralama + int(kisisel_siralama * (0.10 + (i - 20) * 0.075)))
+    
+    # Tercih listesini bölüm sıralamalarıyla eşleştirme
+    eslesen_tercihler = {}
+    for tercih in tercihler:
+        for bolum, siralama in bolumler.items():
+            if siralama <= tercih:
+                eslesen_tercihler[bolum] = siralama
+                break
+    
+    return eslesen_tercihler
+
+# Kullanıcıdan sıralama bilgisi alma
+kisisel_siralama = int(input('Lütfen YKS sıralamanızı giriniz: '))
+
+# Tercih listesini oluşturma ve yazdırma
+tercih_listesi = tercih_listesi_olustur(kisisel_siralama)
+print('Tercih edebileceğiniz bölümler ve sıralamaları:')
+for bolum, siralama in tercih_listesi.items():
+    print(f'{bolum}: {siralama}')
