@@ -1,136 +1,80 @@
-# Örnek bölüm sıralamaları
+YKS BAŞARI SIRALAMASINA GÖRE TERCİH LİSTESİ OLUŞTURAN PYTHON KODU
+
+# Örnek bölüm sıralamaları her puan türüne göre
 bolumler = {
-    'Mühendislik': 40000,
-    'Hukuk': 15000,
-    'Edebiyat': 50000,
-    'Tıp': 10000,
-    'İşletme': 60000,
-    'Mimarlık': 30000,
-    'Bilgisayar Bilimleri': 20000,
-    # Daha fazla bölüm ekleyebilirsiniz...
+    'Sayısal': {
+        'Mühendislik': 40000,
+        'Bilgisayar Bilimleri': 20000,
+        'Tıp': 5000,
+        'Matematik': 30000,
+        # Daha fazla sayısal bölüm ekleyebilirsiniz...
+    },
+    'Sözel': {
+        'Türkçe': 15000,
+        'Edebiyat': 50000,
+        'Gazetecilik': 28000,
+        'Radyo Televizyon': 35000,
+        # Daha fazla sözel bölüm ekleyebilirsiniz...
+    },
+    'Eşit Ağırlık': {
+        'İşletme': 60000,
+        ' İç Mimarlık': 30000,
+        'Uluslararası İlişkiler': 25000,
+        'İktisat': 40000,
+        # Daha fazla eşit ağırlık bölüm ekleyebilirsiniz...
+    },
+    'Yabancı Dil': {
+        'İngiliz Dili ve Edebiyatı': 22000,
+        'Çeviribilim': 30000,
+        # Yabancı dil bölümlerini ekleyebilirsiniz...
+    },
+    'TYT': {
+        'Elektrik': 45000,
+        'Mekatronik': 25000,
+        # TYT bölümlerini ekleyebilirsiniz...
+    }
+    # Daha fazla puan türü ekleyebilirsiniz...
 }
-def tercih_listesi_olustur(kisisel_siralama):
+# Tercih listesi oluşturma fonksiyonu, puan türüne göre
+def tercih_listesi_olustur(kisisel_siralama, puan_turu):
     tercihler = []
     # İlk 3 tercih için %10 daha iyi sıralama
     for i in range(1, 4):
         tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.10))
-    # 4. tercih için %15 daha iyi sıralama
-    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.15))
-    # 5. tercih için %20 daha iyi sıralama
-    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.20))
-    # 6. tercih için %30 daha iyi sıralama
-    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.30))
-    # 7'den 13'e kadar tercihler için %10 daha iyi sıralama
-    for i in range(7, 14):
-        tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.10))
-    # 14'ten 19'a kadar tercihler için %10 daha kötü sıralama
-    for i in range(14, 20):
-        tercihler.append(kisisel_siralama + int(kisisel_siralama * 0.10))
-    # 20'den 24'e kadar tercihler için %10-%40 daha kötü sıralama
-    for i in range(20, 25):
-        tercihler.append(kisisel_siralama + int(kisisel_siralama * (0.10 + (i - 20) * 0.075)))
+    # Diğer tercihler için sıralama hesaplamaları
+    for i in range(4, 11):
+        tercihler.append(kisisel_siralama + int(kisisel_siralama * 0.05 * (i - 3)))
     # Tercih listesini bölüm sıralamalarıyla eşleştirme
     eslesen_tercihler = {}
     for tercih in tercihler:
-        for bolum, siralama in bolumler.items():
+        for bolum, siralama in bolumler[puan_turu].items():
             if siralama <= tercih:
                 eslesen_tercihler[bolum] = siralama
                 break
     # Eğer hiçbir bölüm eşleşmediyse, en iyi sıralamalı bölümleri ekle
     if not eslesen_tercihler:
-        for bolum, siralama in sorted(bolumler.items(), key=lambda item: item[1]):
+        for bolum, siralama in sorted(bolumler[puan_turu].items(), key=lambda item: item[1]):
             eslesen_tercihler[bolum] = siralama
             if len(eslesen_tercihler) == 6:  # İlk 6 bölümü al
                 break
     return eslesen_tercihler
-# Kullanıcıdan sıralama bilgisi alma
+# Kullanıcıdan sıralama ve puan türü bilgisi alma
 kisisel_siralama = int(input('Lütfen YKS sıralamanızı giriniz: '))
+puan_turu = input('Lütfen puan türünüzü giriniz (Sayısal, Sözel, Eşit Ağırlık, Yabancı Dil, TYT): ')
 # Tercih listesini oluşturma ve yazdırma
-tercih_listesi = tercih_listesi_olustur(kisisel_siralama)
+tercih_listesi = tercih_listesi_olustur(kisisel_siralama, puan_turu)
 print('Tercih edebileceğiniz bölümler ve sıralamaları:')
 for bolum, siralama in tercih_listesi.items():
     print(f'{bolum}: {siralama}')
 
-
-Bu Python kodu, bir öğrencinin Yükseköğretim Kurumları Sınavı (YKS) sıralamasına göre tercih edebileceği üniversite bölümlerini belirlemek için yazılmış. İşte kodun satır satır açıklaması:
-python
-# Örnek bölüm sıralamaları
-bolumler = {
-    'Mühendislik': 40000,
-    'Hukuk': 15000,
-    'Edebiyat': 50000,
-    'Tıp': 10000,
-    'İşletme': 60000,
-    'Mimarlık': 30000,
-    'Bilgisayar Bilimleri': 20000,
-    # Daha fazla bölüm ekleyebilirsiniz...
-}
-Bu sözlük yapısı, çeşitli üniversite bölümlerinin ve bu bölümlere giriş için gereken sıralamaların bir listesini içerir.
-python
-def tercih_listesi_olustur(kisisel_siralama):
-    tercihler = []
-tercih_listesi_olustur fonksiyonu, kullanıcının YKS sıralamasını parametre olarak alır ve tercih listesini oluşturmak için kullanılır.
-python
-    # İlk 3 tercih için %10 daha iyi sıralama
-    for i in range(1, 4):
-        tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.10))
-Kullanıcının ilk üç tercihi için, kendi sıralamasından %10 daha iyi bir sıralama hesaplanır ve tercihler listesine eklenir.
-python
-    # 4. tercih için %15 daha iyi sıralama
-    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.15))
-Dördüncü tercih için, kendi sıralamasından %15 daha iyi bir sıralama hesaplanır ve listeye eklenir.
-python
-    # 5. tercih için %20 daha iyi sıralama
-    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.20))
-Beşinci tercih için, kendi sıralamasından %20 daha iyi bir sıralama hesaplanır ve listeye eklenir.
-python
-    # 6. tercih için %30 daha iyi sıralama
-    tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.30))
-Altıncı tercih için, kendi sıralamasından %30 daha iyi bir sıralama hesaplanır ve listeye eklenir.
-python
-    # 7'den 13'e kadar tercihler için %10 daha iyi sıralama
-    for i in range(7, 14):
-        tercihler.append(kisisel_siralama - int(kisisel_siralama * 0.10))
-Yedinci ile on üçüncü tercihler arası için, kendi sıralamasından %10 daha iyi bir sıralama hesaplanır ve listeye eklenir.
-python
-    # 14'ten 19'a kadar tercihler için %10 daha kötü sıralama
-    for i in range(14, 20):
-        tercihler.append(kisisel_siralama + int(kisisel_siralama * 0.10))
-On dördüncü ile on dokuzuncu tercihler arası için, kendi sıralamasından %10 daha kötü bir sıralama hesaplanır ve listeye eklenir.
-python
-    # 20'den 24'e kadar tercihler için %10-%40 daha kötü sıralama
-    for i in range(20, 25):
-        tercihler.append(kisisel_siralama + int(kisisel_siralama * (0.10 + (i - 20) * 0.075)))
-Yirminci ile yirmi dördüncü tercihler arası için, kendi sıralamasından %10 ile %40 arası kötü bir sıralama hesaplanır ve listeye eklenir.
-python
-    # Tercih listesini bölüm sıralamalarıyla eşleştirme
-    eslesen_tercihler = {}
-    for tercih in tercihler:
-        for bolum, siralama in bolumler.items():
-            if siralama <= tercih:
-                eslesen_tercihler[bolum] = siralama
-                break
-Oluşturulan tercih sıralamaları, bölüm sıralamalarıyla karşılaştırılır ve eşleşen bölümler eslesen_tercihler sözlüğüne eklenir.
-python
-    # Eğer hiçbir bölüm eşleşmediyse, en iyi sıralamalı bölümleri ekle
-    if not eslesen_tercihler:
-        for bolum, siralama in sorted(bolumler.items(), key=lambda item: item[1]):
-            eslesen_tercihler[bolum] = siralama
-            if len(eslesen_tercihler) == 6:  # İlk 6 bölümü al
-                break
-Eğer hiçbir bölüm eşleşmezse, en iyi sıralamalı altı bölüm `eslesen_tercihler` sözlüğüne eklenir.
-python
-    return eslesen_tercihler
-Eşleşen tercihler sözlüğü döndürülür.
-python
-# Kullanıcıdan sıralama bilgisi alma
-kisisel_siralama = int(input('Lütfen YKS sıralamanızı giriniz: '))
-Kullanıcıdan YKS sıralaması istenir.
-python
-# Tercih listesini oluşturma ve yazdırma
-tercih_listesi = tercih_listesi_olustur(kisisel_siralama)
-print('Tercih edebileceğiniz bölümler ve sıralamaları:')
-for bolum, siralama in tercih_listesi.items():
-    print(f'{bolum}: {siralama}')
-Kullanıcının sıralamasına göre tercih listesi oluşturulur ve ekrana yazdırılır.
-Bu kod parçası, öğrencilerin tercih yaparken kullanabilecekleri bir tercih robotu mantığına sahiptir. Öğrencinin sıralamasına göre, hangi bölümleri tercih edebileceğini gösterir. Kodun sonunda kullanıcıdan sıralama bilgisi alınır ve bu bilgiye göre tercih listesi oluşturulup ekrana yazdırılır.
+Bu Python kodu, Yükseköğretim Kurumları Sınavı (YKS) sonuçlarına göre öğrencilerin tercih edebilecekleri bölümleri belirlemek için yazılmış bir scripttir. Kodun satır satır açıklaması:
+1-14. Satırlar: bolumler adında bir sözlük (dictionary) tanımlanmış. Bu sözlük, farklı puan türlerine (Sayısal, Sözel, Eşit Ağırlık, Yabancı Dil, TYT) göre üniversite bölümlerinin sıralamalarını içeriyor. Her puan türü kendi içinde bir alt sözlük olarak bölümleri ve o bölümlerin sıralamalarını barındırıyor.
+16-35. Satırlar: tercih_listesi_olustur adında bir fonksiyon tanımlanmış. Bu fonksiyon, kullanıcının kişisel sıralaması ve puan türüne göre bir tercih listesi oluşturuyor.
+17. Satır: tercihler adında boş bir liste oluşturulmuş.
+18-20. Satırlar: Bir for döngüsü ile ilk üç tercih için kullanıcının sıralamasından %10 daha iyi sıralamalar hesaplanıp tercihler listesine ekleniyor.
+21-23. Satırlar: Dördüncü tercihten itibaren her tercih için kullanıcının sıralamasına, sıralamanın %5'i kadar ve tercih sırasının bir fazlası kadar artış eklenerek tercihler listesine ekleniyor.
+25-31. Satırlar: Oluşturulan tercihler listesi, bolumler sözlüğündeki sıralamalarla karşılaştırılıyor ve kullanıcının sıralamasından düşük veya eşit olan ilk bölüm eslesen_tercihler sözlüğüne ekleniyor.
+32-37. Satırlar: Eğer eslesen_tercihler sözlüğü boşsa, yani hiçbir bölüm kullanıcının sıralamasına uymuyorsa, en iyi sıralamalı altı bölüm eslesen_tercihler sözlüğüne ekleniyor.
+39-40. Satırlar: Kullanıcıdan YKS sıralaması ve puan türü bilgisi isteniyor.
+42-46. Satırlar: tercih_listesi_olustur fonksiyonu kullanılarak tercih listesi oluşturuluyor ve tercih_listesi değişkenine atanıyor. Sonra bu tercih listesi ekrana yazdırılıyor.
+Bu script, öğrencilere sınav sonuçlarına göre hangi bölümleri tercih edebileceklerini göstermek için kullanılabilir. Kodun çalışması için kullanıcının sıralama ve puan türü bilgilerini girmesi gerekiyor.
