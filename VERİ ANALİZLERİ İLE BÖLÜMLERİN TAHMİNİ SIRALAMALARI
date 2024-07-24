@@ -1,0 +1,61 @@
+
+
+# Verileri tanımla
+data = {
+    "Düzce Üniversitesi Arıcılık Bölümü": {2020: 1684000, 2021: 1295120, 2022: 1759270, 2023: 1936060},
+    "Bingöl Üniversitesi Arıcılık Bölümü": {2022: 1913447, 2023: 1934850},
+    "Hakkari Üniversitesi Bitki Koruma Bölümü": {2022: 1969349, 2023: 1919894},
+    "Kayseri Üniversitesi Bitki Koruma": {2021: 1537933, 2022: 1657116, 2023: 1783459},
+    "Yozgat Üniversitesi İnşaat Teknolojisi 1": {2021: 1600871, 2022: 2343636, 2023: 2126837},
+    "Iğdır Üniversitesi İnşaat Teknolojisi 1": {2021: 1566478, 2022: 2274817, 2023: 2121051},
+    "Kırşehir Ahi Evran Üniversitesi İnşaat Teknolojisi": {2021: 1368147, 2022: 2281543, 2023: 2120928},
+    "Bolu Üniversitesi Kümes Hayvanları": {2021: 1588068, 2022: 2107654, 2023: 2030305},
+    "Manisa Üniversitesi Kümes Hayvanları": {2021: 1568862, 2022: 2148077, 2023: 2004218},
+    "Bingöl Üniversitesi Halıcılık": {2022: 2036647, 2023: 2097771},
+}
+
+# Tahmin fonksiyonu
+def predict_next_year(data):
+    predictions = {}
+    for university, years in data.items():
+        sorted_years = sorted(years.keys())
+        changes = []
+        
+        for i in range(1, len(sorted_years)):
+            change = years[sorted_years[i]] / years[sorted_years[i - 1]]
+            changes.append(change)
+        
+        if changes:
+            avg_change = sum(changes) / len(changes)
+            last_year = sorted_years[-1]
+            prediction = years[last_year] * avg_change
+            predictions[university] = prediction
+
+    return predictions
+
+# 2024 tahminlerini hesapla
+predictions = predict_next_year(data)
+
+# Sonuçları yazdır
+print("2024 Tahmini Sıralamalar:")
+for university, prediction in predictions.items():
+    print(f"{university}: {prediction:.0f}")
+
+Bu Python kodu, belirli üniversite bölümleri için 2024 yılı için tahmini sıralama değerlerini hesaplamak için kullanılır. Kod şunları yapmaktadır:
+
+1. Veri Tanımı:
+   data adlı sözlük, farklı üniversitelerin bölümleri için yıllara göre sıralama değerlerini içerir. Örneğin, "Düzce Üniversitesi Arıcılık Bölümü" 2020'den 2023'e kadar sıralama değerlerine sahiptir.
+
+2. Tahmin Fonksiyonu:
+   predict_next_year(data) adlı fonksiyon, her üniversite bölümü için bir sonraki yıl (2024) için sıralama tahmini yapar.
+   - Fonksiyon, her üniversite bölümü için yılları ve değerleri alır.
+   - Yıllar, sıralanır ve yıllar arasındaki değişim oranları hesaplanır (örneğin, bir yılın sıralama değeri bir önceki yılın sıralama değerine bölünür).
+   - Bu değişim oranlarının ortalaması alınır ve en son yılın sıralama değeri bu ortalama oran ile çarpılarak bir sonraki yıl için tahmin yapılır.
+
+3. Tahminlerin Hesaplanması:
+   predictions adlı bir sözlük oluşturulur ve her üniversite bölümü için 2024 yılı tahminleri bu sözlükte saklanır.
+
+4. Sonuçların Yazdırılması:
+   Kod, 2024 yılı için tahmin edilen sıralama değerlerini her üniversite bölümü için ekrana yazdırır. 
+
+Bu kod, geçmiş yıllardaki sıralama değerlerini kullanarak bir üniversite bölümü için gelecek yılki sıralama tahminlerini hesaplar.
