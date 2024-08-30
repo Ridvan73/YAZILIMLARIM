@@ -1,0 +1,101 @@
+# Mesleki yönelim alanları ve soruları
+mesleki_yonelim_alanlari = {
+ 'Teknik ve Fen Alanı’: [2, 9, 16, 23, 30, 36, 43, 50, 57, 59],
+ 'Sosyal Bilimler Alanı’: [4, 11, 18, 25, 32, 39, 46, 53, 60, 6],
+ 'Sanat ve Edebiyat Alanı’: [3, 10, 17, 24, 31, 38, 45, 52, 58, 5],
+ 'Sağlık ve Spor Alanı’: [1, 8, 15, 22, 29, 35, 42, 49, 56, 7],
+ 'Ticaret ve Yönetim Alanı’: [6, 13, 20, 27, 34, 41, 48, 55, 62, 12],
+ 'Tarım ve Hayvancılık Alanı’: [5, 14, 21, 28, 33, 40, 47, 54, 61, 4]
+}
+
+# Sorular ve yanıt seçenekleri
+sorular = [
+ "1. Yeni bir dil öğrenmek ister misiniz?",
+ "2. Bir bilgisayar programı yazabilir misiniz?",
+ "3. Bir resim sergisine gitmek ister misiniz?",
+ "4. Bir iş görüşmesine nasıl hazırlanacağınızı biliyor musunuz?",
+ "5. Bir hayvanat bahçesinde çalışmak ister misiniz?",
+ "6. Bir müzik aleti çalabilir misiniz?",
+ "7. Bir spor takımında yer almak ister misiniz?",
+ "8. Bir gazetede yazı yazabilir misiniz?",
+ "9. Bir elektrik devresi kurabilir misiniz?",
+ "10. Bir tiyatro oyununda rol almak ister misiniz?",
+ "11. Bir hastanede gönüllü olarak çalışmak ister misiniz?",
+ "12. Bir işletmenin gelir-gider tablosunu hazırlayabilir misiniz?",
+ "13. Bir bitkinin nasıl büyüdüğünü araştırmak ister misiniz?",
+ "14. Bir şiir yazabilir misiniz?",
+ "15. Bir liderlik eğitimine katılmak ister misiniz?",
+ "16. Bir deney yapmak ister misiniz?",
+ "17. Bir dans kursuna gitmek ister misiniz?",
+ "18. Bir anket hazırlayabilir misiniz?",
+ "19. Bir makineyi tamir edebilir misiniz?",
+ "20. Bir hikaye anlatabilir misiniz?",
+ "21. Bir topluluk önünde konuşmak ister misiniz?",
+ "22. Bir hayvanın anatomisini çizebilir misiniz?",
+ "23. Bir bütçe planı yapabilir misiniz?",
+ "24. Bir kitap eleştirisi yazabilir misiniz?",
+ "25. Bir harita okuyabilir misiniz?",
+ "26. Bir ağacı budayabilir misiniz?",
+ "27. Bir ürünün kalitesini kontrol edebilir misiniz?",
+ "28. Bir telefon görüşmesi yapabilir misiniz?",
+ "29. Bir yangın söndürme talimatını biliyor musunuz?",
+ "30. Bir banka hesabı açabilir misiniz?",
+ "31. Bir şarkı sözü yazabilir misiniz?",
+ "32. Bir film müziği seçebilir misiniz?",
+ "33. Bir yasa tasarısı hazırlayabilir misiniz?",
+ "34. Bir canlının DNA'sını incelemek ister misiniz?",
+ "35. Bir siyasi partiye üye olmak ister misiniz?",
+ "36. Bir laboratuvarda çalışmak ister misiniz?",
+ "37. Bir sosyal sorumluluk projesine katılmak ister misiniz?",
+ "38. Bir web sitesi tasarlayabilir misiniz?",
+ "39. Bir gök cisminin hareketini izlemek ister misiniz?",
+ "40. Bir saat ayarlayabilir misiniz?",
+ "41. Bir insanın davranışlarını anlamak ister misiniz?",
+ "42. Bir fotoğraf albümü oluşturabilir misiniz?",
+ "43. Bir fatura ödeyebilir misiniz?",
+ "44. Bir müzik grubunda yer almak ister misiniz?",
+ "45. Bir caz konserine gitmek ister misiniz?",
+ "46. Bir dernek için gelir sağlayabilir misiniz?",
+ "47. Bir depremin nedenlerini öğrenmek ister misiniz?",
+ "48. Bir bilim adamının hayatını okumak ister misiniz?",
+ "49. Bir ekip çalışmasına katılmak ister misiniz?",
+ "50. Bir film senaryosu yazmak ister misiniz?",
+ "51. Bir işçinin sorunlarını dinlemek ister misiniz?",
+ "52. Bir mobilya yapabilir misiniz?",
+ "53. Bir mücevher tasarlayabilir misiniz?",
+ "54. Bir yemek tarifi uygulayabilir misiniz?",
+ "55. Bir oyun kurallarını belirleyebilir misiniz?",
+ "56. Bir çiçeği sulayabilir misiniz?",
+ "57. Bir rapor yazabilir misiniz?",
+ "58. Bir şiiri yorumlayabilir misiniz?",
+ "59. Bir grafik çizebilir misiniz?",
+ "60. Bir elbise dikmek ister misiniz?"
+]
+# Cevaplara göre puanlama
+puanlama = {
+ 'evet': 3,
+ 'belki': 2,
+ 'hayır': 1
+}
+def meslek_yonelim_testi():
+ puanlar = {alan: 0 for alan in mesleki_yonelim_alanlari}
+ 
+ for i, soru in enumerate(sorular, 1):
+ while True:
+ cevap = input(f"{soru}\n- Evet\n- Belki\n- Hayır\nCevap: ").strip().lower()
+ if cevap in puanlama:
+ break
+ else:
+ print("Lütfen geçerli bir cevap girin (Evet, Belki, Hayır).")
+ 
+ for alan, soru_numaralari in mesleki_yonelim_alanlari.items():
+ if i in soru_numaralari:
+ puanlar[alan] += puanlama[cevap]
+ 
+ en_uygun_alan = max(puanlar, key=puanlar.get)
+ print(f"\nSana en uygun mesleki yönelim alanı: {en_uygun_alan}")
+ print(f"\nDiğer alanların puanları:")
+ for alan, puan in puanlar.items():
+ print(f"{alan}: {puan}")
+if __name__ == "__main__":
+ meslek_yonelim_testi()
