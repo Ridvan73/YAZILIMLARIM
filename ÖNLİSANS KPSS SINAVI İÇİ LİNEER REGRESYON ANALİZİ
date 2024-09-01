@@ -1,0 +1,14 @@
+ÖNLİSANS KPSS SINAVI İÇİN REGRESYON ANALİZİYLE PYTHON KULLANARAK PUAN TAHMİNİ 
+
+import numpy as np
+# Veriler
+years = np.array([2010, 2012, 2014, 2016, 2018, 2020, 2022])
+scores = np.array([75.07886, 75.47701, 78.24026, 79.93664, 75.45503, 76.14097, 76.61513])
+# Lineer regresyon hesaplaması
+# np.polyfit kullanarak birinci dereceden (lineer) regresyon katsayılarını hesapla
+coefficients = np.polyfit(years, scores, 1)
+# 2024 yılı için tahmin
+year_2024 = 2024
+predicted_score_2024 = np.polyval(coefficients, year_2024)
+# Tahmin edilen puanı yazdır
+print(f"2024 yılı için tahmin edilen puan: {predicted_score_2024:.2f}")
