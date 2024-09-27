@@ -1,0 +1,205 @@
+
+Bir Veri Analizi Ve Makine Öğrenimi Modeli Oluşturma
+
+Bu kod, Python programlama dilinde yazılmış bir veri analizi ve makine öğrenimi modeli oluşturma uygulamasıdır. Bu kod, bir veri seti üzerinde temel analizler yapar, verileri görselleştirir ve eksik verileri doldurur. Ardından, kullanıcıdan seçilen bir makine öğrenimi modelini kullanarak veriyi eğitir ve modelin başarısını ölçer. Hiperparametre optimizasyonu yaparak en iyi modeli seçer ve nihayetinde PDF raporu oluşturur.
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.metrics import mean_squared_error, accuracy_score, classification_report, confusion_matrix
+from sklearn.impute import SimpleImputer
+from fpdf import FPDF
+import plotly.express as px
+import plotly.graph_objects as go
+import warnings
+warnings.filterwarnings("ignore")
+# Veri yükleme ve önizleme
+def load_data(file_path):
+    try:
+        data = pd.read_csv(file_path)
+        print("Veri başarıyla yüklendi.")
+        return data
+    except FileNotFoundError:
+        print(f"{file_path} bulunamadı.")
+        return None
+# Temel veri analizi
+def basic_analysis(data):
+    print("Veri hakkında genel bilgiler:")
+    print(data.info())
+    print("\nVerinin ilk 5 satırı:")
+    print(data.head())
+    print("\nEksik veri kontrolü:")
+    print(data.isnull().sum())
+    print("\nTemel istatistikler:")
+    print(data.describe())
+# Eksik verileri doldurma
+def handle_missing_data(data, strategy='mean'):
+    imputer = SimpleImputer(strategy=strategy)
+    data_filled = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
+    print("\nEksik veriler dolduruldu.")
+    return data_filled
+# Korelasyon analizi ve görselleştirme
+def correlation_analysis(data):
+    corr_matrix = data.corr()
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt='.2f')
+    plt.title('Korelasyon Matrisi')
+    plt.show()
+    fig = go.Figure(data=go.Heatmap(z=corr_matrix.values, x=corr_matrix.columns, y=corr_matrix.columns, colorscale='Viridis'))
+    fig.update_layout(title='Korelasyon Matrisi (Interaktif)')
+    fig.show()
+# Veri görselleştirme (interaktif grafikler)
+def visualize_data(data, columns):
+    for column in columns:
+        fig = px.histogram(data, x=column, title=f'{column} Histogramı')
+        fig.show()
+# Model eğitimi ve değerlendirme
+def train_and_evaluate_model(X, y, model):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model.fit(X_train, y_train)
+    predictions = model.predict(X_test)   
+    # Çoklu sınıf durumu veya regresyon analizi
+    if len(np.unique(y)) > 2:
+        accuracy = accuracy_score(y_test, predictions)
+        print(f"Model Doğruluğu: {accuracy * 100:.2f}%")
+        print("\nSınıflandırma Raporu:")
+        print(classification_report(y_test, predictions))     
+        # Confusion matrix görselleştirme
+        cm = confusion_matrix(y_test, predictions)
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+        plt.title('Confusion Matrix')
+        plt.show()
+        return accuracy
+    else:
+        mse = mean_squared_error(y_test, predictions)
+        print(f"Modelin Hata Kare Ortalama (MSE): {mse:.2f}")
+        return mse
+# Hyperparametre optimizasyonu (GridSearch)
+def tune_model(X, y, model, param_grid):
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, scoring='accuracy')
+    grid_search.fit(X, y)
+    print(f"En iyi parametreler: {grid_search.best_params_}")
+    return grid_search.best_estimator_
+# PDF raporu oluşturma
+def create_report(model_name, accuracy, file_name='veri_analizi_raporu.pdf'):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(200, 10, txt="Veri Analizi Raporu", ln=True, align='C')
+    pdf.set_font('Arial', '', 12)
+    pdf.cell(200, 10, txt=f"{model_name} Modelinin Sonuçları:", ln=True)
+    pdf.cell(200, 10, txt=f"Doğruluk: {accuracy:.2f}", ln=True)   
+    pdf.output(file_name)
+    print(f"Rapor {file_name} olarak kaydedildi.")
+# Ana program
+if __name__ == "__main__":
+    file_path = input("Veri dosyasının yolunu girin (örneğin: veri.csv): ")
+    data = load_data(file_path)
+    if data is not None:
+        basic_analysis(data)      
+        # Eksik verileri doldur
+        data = handle_missing_data(data, strategy='mean')
+        # Korelasyon analizi
+        correlation_analysis(data)
+        # Görselleştirme
+        columns_to_visualize = data.select_dtypes(include=[np.number]).columns.tolist()
+        visualize_data(data, columns_to_visualize)
+        # Model eğitimi
+        target_column = input("Hedef değişkenin adını girin: ")
+        X = data.drop(columns=[target_column])
+        y = data[target_column]
+        model_choice = input("Hangi modeli kullanmak istersiniz? (1: LinearRegression, 2: RandomForestClassifier): ")
+        if model_choice == '1':
+            model = LinearRegression()
+        elif model_choice == '2':
+            model = RandomForestClassifier()
+        else:
+            print("Geçersiz model seçimi.")
+            exit()
+        accuracy = train_and_evaluate_model(X, y, model)
+        # Hiperparametre optimizasyonu örneği
+        if model_choice == '2':  # RandomForest için optimizasyon
+            param_grid = {
+                'n_estimators': [100, 200],
+                'max_depth': [None, 10, 20],
+                'min_samples_split': [2, 5]
+            }
+            best_model = tune_model(X, y, model, param_grid)
+            accuracy = train_and_evaluate_model(X, y, best_model)
+        # Rapor oluşturma
+        create_report(model_choice, accuracy, 'veri_analizi_raporu.pdf') 
+
+Kullanılan Kütüphaneler:
+1. Pandas: Veri işleme ve analizi için kullanılan kütüphanedir. Veri dosyalarını okuma ve temel işlemleri sağlar.
+2. NumPy: Sayısal hesaplamalar için kullanılan kütüphanedir. 
+3. Matplotlib ve Seaborn: Veri görselleştirme araçlarıdır. 
+4. Scikit-Learn (sklearn): Makine öğrenimi modellerini oluşturmak ve değerlendirmek için kullanılan bir kütüphanedir.  Bu kodda regresyon, sınıflandırma modelleri, hiperparametre optimizasyonu ve metrikler için kullanılıyor.
+5. FPDF: PDF dosyası oluşturmak için kullanılan kütüphanedir. 
+6. Plotly: İnteraktif grafikler ve görselleştirmeler yapmak için kullanılır.
+7. Warnings: Uyarıları gizlemek için kullanılır.
+
+Kodun İşlevleri:
+1. Veri Yükleme ve Önizleme (load_data)
+file_path değişkeniyle dosya yolunu alarak, CSV formatında veri yüklüyor.
+Veri yüklendikten sonra verinin ilk birkaç satırını ve genel bilgilerini ekrana yazdırıyor.
+2. Temel Veri Analizi (basic_analysis)
+Verinin yapısı, eksik veri olup olmadığı ve temel istatistiksel özetini ekrana yazdırır.
+3. Eksik Verilerin Doldurulması (handle_missing_data)
+Verideki eksik değerleri doldurur. Varsayılan olarak ortalama ile doldurur, ancak başka stratejiler de seçilebilir (mean, median, most_frequent gibi).
+4. Korelasyon Analizi (correlation_analysis)
+Verideki sayısal değişkenler arasındaki korelasyonu hesaplar ve görselleştirir. Hem matplotlib/seaborn kullanarak sabit grafik hem de Plotly ile interaktif bir grafik oluşturur.
+5. Veri Görselleştirme (visualize_data)
+Seçilen sütunlar için histogramlar oluşturur ve her bir değişkenin dağılımını gösterir. Bu histogramlar Plotly kullanılarak interaktif olarak oluşturulur.
+6. Model Eğitimi ve Değerlendirme (train_and_evaluate_model)
+Kullanıcıdan gelen modele göre (Linear Regression veya Random Forest Classifier) veriyi eğitir ve test eder.
+Eğitim verileri ve test verileri ayrılır (train_test_split kullanılarak).
+Sınıflandırma modelleri için doğruluk skoru, sınıflandırma raporu ve confusion matrix (karışıklık matrisi) hesaplanır ve görselleştirilir.
+Regresyon modeli için hata kare ortalaması (MSE) hesaplanır.
+7. Hiperparametre Optimizasyonu (tune_model)
+Random Forest modeli için GridSearchCV kullanılarak hiperparametre optimizasyonu yapılır.
+Verilen parametre ızgarasında en iyi model seçilir.
+8. PDF Raporu Oluşturma (create_report)
+Modelin performans sonuçlarını içeren bir PDF raporu oluşturur ve kaydeder.
+
+Nasıl Kullanılır?
+1. Kodun çalışması için gerekli kütüphanelerin yüklü olduğundan emin olmalısınız. Bunları şu komutlarla yükleyebilirsiniz:
+
+pip install pandas numpy matplotlib seaborn scikit-learn fpdf plotly
+
+2. Kodun adımlarını takip ederek, önce veriyi yüklersiniz. CSV dosyası formatında bir veri setiniz olmalıdır. Program, bu dosyanın yolunu sizden ister:
+
+file_path = input("Veri dosyasının yolunu girin (örneğin: veri.csv): ")
+data = load_data(file_path)
+
+3. Veri yüklendikten sonra, temel analizleri gerçekleştirir ve eksik verileri doldurursunuz. 
+
+basic_analysis(data)
+data = handle_missing_data(data, strategy='mean')
+
+4. Korelasyon analizi ve veri görselleştirme adımlarını takip edersiniz. 
+
+correlation_analysis(data)
+columns_to_visualize = data.select_dtypes(include=[np.number]).columns.tolist()
+visualize_data(data, columns_to_visualize)
+
+5. Modeli eğitip test etmek için hedef sütunu seçersiniz (bu sütun tahmin edilmek istenen değişkendir) ve model tercihinde bulunursunuz (örneğin LinearRegression veya RandomForestClassifier):
+
+target_column = input("Hedef değişkenin adını girin: ")
+X = data.drop(columns=[target_column])
+y = data[target_column]
+model_choice = input("Hangi modeli kullanmak istersiniz? (1: LinearRegression, 2: RandomForestClassifier): ")
+
+6. Son olarak, eğitilen modelin doğruluk veya hata oranlarını ekrana bastırırsınız. Eğer hiperparametre optimizasyonu yapmak istiyorsanız, bu aşamada Random Forest modeline odaklanabilirsiniz:
+
+param_grid = {'n_estimators': [100, 200], 'max_depth': [None, 10, 20], 'min_samples_split': [2, 5]}
+best_model = tune_model(X, y, model, param_grid)
+accuracy = train_and_evaluate_model(X, y, best_model)
+
+7. Tüm adımların sonunda, modelin sonuçlarını içeren bir PDF raporu oluşturulur. 
+
+create_report("RandomForestClassifier", accuracy, 'veri_analizi_raporu.pdf')
+
