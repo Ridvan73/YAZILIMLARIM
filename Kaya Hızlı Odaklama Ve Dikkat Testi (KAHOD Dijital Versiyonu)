@@ -1,0 +1,122 @@
+Kaya Hızlı Odaklanma Dikkat Testi (KAHOD Test Dijital Versiyonu)
+
+import tkinter as tk
+import random
+import string
+import time
+
+# Test parametreleri
+target_letter = "D"
+grid_size = 15  # Daha büyük bir grid
+time_limit = 45  # Zaman (45 saniye)
+score = 0
+start_time = None
+
+def start_test():
+    global start_time, score
+    score = 0
+    start_time = time.time()
+    score_label.config(text="Score: 0")
+    start_button.config(state=tk.DISABLED)
+    create_grid()
+    root.after(1000, update_timer)  # Zamanlayıcıyı başlat
+
+def create_grid():
+    """Rastgele harflerden oluşan bir grid oluşturur"""
+    for widget in grid_frame.winfo_children():
+        widget.destroy()
+    
+    # Farklı harfler ve rastgele boyutlar
+    for i in range(grid_size):
+        for j in range(grid_size):
+            letter = random.choice(string.ascii_uppercase)
+            font_size = random.choice([10, 12, 14, 16, 18])  # Rastgele font boyutu
+            button = tk.Button(grid_frame, text=letter, font=("Helvetica", font_size), width=3, height=2, command=lambda b=letter: check_letter(b))
+            button.grid(row=i, column=j)
+
+def check_letter(letter):
+    global score
+    if time.time() - start_time > time_limit:
+        end_test()
+        return
+    
+    # Hedef harf bulunduğunda skor artar
+    if letter == target_letter:
+        score += 1
+        score_label.config(text=f"Score: {score}")
+        create_grid()  # Grid'i yenile
+
+def end_test():
+    """Testi bitirir ve skoru gösterir"""
+    for widget in grid_frame.winfo_children():
+        widget.destroy()
+    score_label.config(text=f"Test bitti! Nihai Skor: {score}")
+    start_button.config(state=tk.NORMAL)
+    timer_label.config(text="Kalan Süre: 0")
+
+def update_timer():
+    """Her saniye kalan süreyi günceller"""
+    elapsed_time = int(time.time() - start_time)
+    remaining_time = max(time_limit - elapsed_time, 0)
+    timer_label.config(text=f"Kalan Süre: {remaining_time}")
+    
+    if remaining_time > 0:
+        root.after(1000, update_timer)
+    else:
+        end_test()
+
+# Arayüz
+root = tk.Tk()
+root.title("İleri Düzey Dikkat Testi")
+
+# Sonuçlar gösterilecek
+score_label = tk.Label(root, text="Score: 0", font=("Helvetica", 16))
+score_label.pack(pady=10)
+
+# Zaman göstergesi
+timer_label = tk.Label(root, text=f"Kalan Süre: {time_limit}", font=("Helvetica", 16))
+timer_label.pack(pady=10)
+
+# Test başlatma butonu
+start_button = tk.Button(root, text="Başla", font=("Helvetica", 16), command=start_test)
+start_button.pack(pady=10)
+
+# Harfler için grid
+grid_frame = tk.Frame(root)
+grid_frame.pack()
+
+# Pencereyi başlat
+root.mainloop()
+
+Bu kod, bir dikkat testi uygulaması oluşturur. Bu dikkat testi uygulaması, kullanıcıların dikkat ve odaklanma becerilerini ölçmek için kullanılır. 
+Görevi ve Kullanımı
+Görevi: Kullanıcıların belirli bir süre içinde hedef harfi bulmalarını sağlayarak dikkat ve odaklanma becerilerini test eder.
+Kullanımı: Kullanıcı, rastgele harflerden oluşan bir gridde hedef harfi bulmaya çalışır. Her doğru seçimde skor artar ve grid yenilenir. Belirlenen süre sonunda test biter ve nihai skor gösterilir.
+
+Kimler Kullanır?
+Öğrenciler: Dikkat ve odaklanma becerilerini geliştirmek isteyen öğrenciler.
+Eğitimciler: Öğrencilerin dikkat seviyelerini ölçmek ve geliştirmek için bu tür testleri kullanabilirler.
+Psikologlar ve Terapistler: Dikkat eksikliği ve hiperaktivite bozukluğu (DEHB) gibi durumları değerlendirmek için kullanabilirler.
+Genel Kullanıcılar: Kendi dikkat ve odaklanma becerilerini test etmek isteyen herkes kullanabilir.  
+
+Kodun yaptıkları: 
+
+tkinter: Bu kütüphane, masaüstü uygulamaları oluşturmak için kullanılan bir Python kütüphanesidir. Kodumuzdaki pencere, butonlar ve harflerin yerleştirildiği grid gibi görsel öğelerin oluşturulmasını sağlıyor.
+ random, string, time: Bu kütüphaneler sırasıyla rastgele sayı üretmek, harflerle işlem yapmak ve zamanı ölçmek için kullanılıyor.
+ target_letter, grid_size, time_limit: Bu değişkenler oyunun zorluğunu belirliyor. target_letter bulunması gereken harf, grid_size harflerin yerleştirildiği ızgaranın boyutunu ve time_limit ise oyun süresini belirtiyor.
+ score: Oyuncunun puanını tutan değişken.
+ start_time: Oyunun başladığı zamanı tutarak süreyi hesaplamak için kullanılıyor.
+
+Fonksiyonların ne yaptığını kısaca özetleyelim:
+ start_test(): Oyunu başlatır, puanı sıfırlar, harf ızgarasını oluşturur ve zamanlayıcıyı başlatır.
+ create_grid(): Rastgele harflerden oluşan bir ızgara oluşturur.
+ check_letter(letter): Tıklanan harfin hedef harf olup olmadığını kontrol eder. Eğer eşleşirse puanı artırır ve yeni bir ızgara oluşturur.
+ end_test(): Oyunu bitirir, son puanı gösterir ve başlat düğmesini aktif hale getirir.
+ update_timer(): Her saniye kalan süreyi günceller.
+Kodun genel akışı:
+ Arayüz oluşturuluyor: Pencere, butonlar, etiketler ve harflerin yerleştirileceği bir ızgara oluşturuluyor.
+ Oyun başlatılıyor: "Başla" düğmesine basıldığında start_test() fonksiyonu çağrılıyor ve oyun başlıyor.
+ Harf ızgarası oluşturuluyor: Rastgele harflerden oluşan bir ızgara oluşturuluyor ve ekrana yerleştiriliyor.
+ Oyuncu harfleri tıklıyor: Oyuncu ızgaradaki harfleri tıkladığında check_letter() fonksiyonu çağrılıyor ve puan kontrolü yapılıyor.
+ Zamanlayıcı çalışıyor: update_timer() fonksiyonu belirli aralıklarla çağrılarak kalan süre güncelleniyor.
+ Oyun bitiyor: Zaman dolduğunda veya belirli bir koşul sağlandığında end_test() fonksiyonu çağrılıyor ve oyun bitiyor.
