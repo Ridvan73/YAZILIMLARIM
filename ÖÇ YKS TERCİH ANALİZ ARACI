@@ -1,0 +1,416 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+import warnings
+warnings.filterwarnings('ignore')
+# Türkçe karakter desteği için matplotlib ayarları
+plt.rcParams['font.family'] = ['DejaVu Sans']
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans']  # Ek font ayarı eklendi
+plt.rcParams['axes.unicode_minus'] = False
+class YKSTercihAnalizi:
+    def __init__(self):
+        """YKS Tercih Analizi sınıfının başlatıcı fonksiyonu"""
+        self.veri = None
+        self.analiz_sonuclari = {}
+    def veri_yukle(self, dosya_yolu=None, manuel_veri=None):
+        if dosya_yolu:
+            self.veri = pd.read_csv(dosya_yolu)
+        elif manuel_veri:
+            self.veri = pd.DataFrame(manuel_veri)
+        else:
+            self.ornek_veri_olustur()
+    def ornek_veri_olustur(self):
+        np.random.seed(42)
+        bolumler = [
+            "Bilgisayar Mühendisliği - İTÜ",
+            "Endüstri Mühendisliği - ODTÜ",
+            "İşletme - Boğaziçi",
+            "Tıp - Hacettepe",
+            "Hukuk - İstanbul",
+            "Makine Mühendisliği - ODTÜ",
+            "Elektrik-Elektronik Müh. - İTÜ",
+            "Uluslararası İlişkiler - Bilkent",
+            "Ekonomi - Boğaziçi",
+            "Psikoloji - ODTÜ"
+        ]
+        yillar = [2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        veri_listesi = []
+        for bolum in bolumler:
+            base_siralama = np.random.randint(1000, 50000)
+            trend = np.random.choice([-1, 0, 1], p=[0.3, 0.4, 0.3])
+            volatilite = np.random.uniform(0.05, 0.25)
+            for i, yil in enumerate(yillar):
+                trend_etkisi = trend * i * 500
+                rastgele_degisim = np.random.normal(0, base_siralama * volatilite)
+                siralama = max(1, int(base_siralama + trend_etkisi + rastgele_degisim))
+                kontenjan = np.random.randint(50, 300)
+                veri_listesi.append({
+                    'Yil': yil,
+                    'Bolum': bolum,
+                    'Universite': bolum.split(' - ')[1],
+                    'Siralama': siralama,
+                    'Kontenjan': kontenjan,
+                    'Doluluk_Orani': np.random.uniform(0.85, 1.0)
+                })
+        self.veri = pd.DataFrame(veri_listesi)
+        print("Örnek veri seti oluşturuldu!")
+    def tanimlayici_istatistikler(self, bolum_adi):
+        if self.veri is None:
+            print("Önce veri yüklemelisiniz!")
+            return None
+        bolum_verisi = self.veri[self.veri['Bolum'] == bolum_adi]['Siralama']
+        if len(bolum_verisi) == 0:
+            print(f"'{bolum_adi}' bölümü bulunamadı!")
+            return None
+        sonuclar = {
+            'ortalama': bolum_verisi.mean(),
+            'medyan': bolum_verisi.median(),
+            'std_sapma': bolum_verisi.std(),
+            'min_siralama': bolum_verisi.min(),
+            'max_siralama': bolum_verisi.max(),
+            'varyasyon_katsayisi': (bolum_verisi.std() / bolum_verisi.mean()) * 100,
+            'carpiklik': stats.skew(bolum_verisi),
+            'basiklik': stats.kurtosis(bolum_verisi)
+        }
+        return sonuclar
+    def trend_analizi(self, bolum_adi):
+        """  
+        Trend analizi yapar - Linear Regression ve hareketli ortalama            
+        Parameters:  
+        bolum_adi (str): Analiz edilecek bölüm adı            
+        Returns:  
+        dict: Trend analizi sonuçları  
+        """  
+        bolum_verisi = self.veri[self.veri['Bolum'] == bolum_adi].copy()  
+        bolum_verisi = bolum_verisi.sort_values('Yil')            
+        if len(bolum_verisi) < 3:  
+            print("Trend analizi için en az 3 yıllık veri gerekli!")  
+            return None                
+        # Linear Regression  
+        X = bolum_verisi['Yil'].values.reshape(-1, 1)  
+        y = bolum_verisi['Siralama'].values        
+        model = LinearRegression()  
+        model.fit(X, y)            
+        # Tahmin  
+        y_pred = model.predict(X)  
+        r2 = r2_score(y, y_pred)            
+        # Hareketli ortalama (3 yıllık) - DÜZELTME: center=True parametresi kaldırıldı
+        bolum_verisi['Hareketli_Ortalama'] = bolum_verisi['Siralama'].rolling(window=3).mean()            
+        # Gelecek tahmini (2025-2026)  
+        gelecek_yillar = np.array([[2025], [2026]])  
+        gelecek_tahmin = model.predict(gelecek_yillar)            
+        sonuclar = {  
+            'egim': model.coef_[0],  
+            'kesim': model.intercept_,  
+            'r2_score': r2,  
+            'trend_yonu': 'Artan' if model.coef_[0] > 0 else 'Azalan' if model.coef_[0] < 0 else 'Sabit',  
+            'yillik_degisim': abs(model.coef_[0]),  
+            'gelecek_tahmin_2025': gelecek_tahmin[0],  
+            'gelecek_tahmin_2026': gelecek_tahmin[1],  
+            'hareketli_ortalama': bolum_verisi['Hareketli_Ortalama'].tolist(),  
+            'yillar': bolum_verisi['Yil'].tolist(),  
+            'siralamalar': bolum_verisi['Siralama'].tolist()  
+        }            
+        return sonuclar
+
+    def volatilite_analizi(self, bolum_adi):
+        """  
+        Volatilite ve risk analizi            
+        Parameters:  
+        bolum_adi (str): Analiz edilecek bölüm adı            
+        Returns:  
+        dict: Volatilite analizi sonuçları  
+        """  
+        bolum_verisi = self.veri[self.veri['Bolum'] == bolum_adi]['Siralama']
+        if len(bolum_verisi) < 2:
+            print("Volatilite analizi için en az 2 yıllık veri gerekli!")
+            return None
+        # Yıllık değişim oranları  
+        yillik_degisim = bolum_verisi.pct_change().dropna()            
+        # Volatilite metrikleri  
+        volatilite = yillik_degisim.std()  
+        ortalama_degisim = yillik_degisim.mean()            
+        # Risk kategorisi  
+        if volatilite < 0.1:  
+            risk_kategorisi = "Düşük Risk"  
+        elif volatilite < 0.2:  
+            risk_kategorisi = "Orta Risk"  
+        else:  
+            risk_kategorisi = "Yüksek Risk"                
+        # Güven aralığı (%95)  
+        ortalama = bolum_verisi.mean()  
+        std_hata = bolum_verisi.std() / np.sqrt(len(bolum_verisi))  
+        # DÜZELTME: Parametre sırası düzeltildi
+        guven_araligi = stats.t.interval(0.95, len(bolum_verisi)-1, loc=ortalama, scale=std_hata)            
+        sonuclar = {  
+            'volatilite': volatilite,  
+            'ortalama_degisim': ortalama_degisim,  
+            'risk_kategorisi': risk_kategorisi,  
+            'guven_araligi_alt': guven_araligi[0],  
+            'guven_araligi_ust': guven_araligi[1],  
+            'maksimum_dalgalanma': bolum_verisi.max() - bolum_verisi.min()  
+        }            
+        return sonuclar
+    def kontenjan_analizi(self, bolum_adi):
+        """  
+        Kontenjan etkisi analizi            
+        Parameters:  
+        bolum_adi (str): Analiz edilecek bölüm adı            
+        Returns:  
+        dict: Kontenjan analizi sonuçları  
+        """  
+        bolum_verisi = self.veri[self.veri['Bolum'] == bolum_adi].copy()            
+        # Kontenjan-Sıralama korelasyonu  
+        korelasyon = bolum_verisi['Kontenjan'].corr(bolum_verisi['Siralama'])            
+        # Kontenjan değişim analizi  
+        bolum_verisi = bolum_verisi.sort_values('Yil')  
+        kontenjan_degisim = bolum_verisi['Kontenjan'].pct_change().dropna()         
+        sonuclar = {  
+            'kontenjan_siralama_korelasyon': korelasyon,  
+            'ortalama_kontenjan': bolum_verisi['Kontenjan'].mean(),  
+            'kontenjan_volatilite': kontenjan_degisim.std(),  
+            'son_yil_kontenjan': bolum_verisi['Kontenjan'].iloc[-1],  
+            'kontenjan_trend': 'Artan' if kontenjan_degisim.mean() > 0 else 'Azalan'  
+        }       
+        return sonuclar
+    def kapsamli_analiz(self, bolum_adi):
+        """  
+        Kapsamlı analiz - tüm analizleri birleştirir      
+        Parameters:  
+        bolum_adi (str): Analiz edilecek bölüm adı        
+        Returns:  
+        dict: Kapsamlı analiz sonuçları  
+        """  
+        print(f"\n=== {bolum_adi} - KAPSAMLI ANALİZ ===")           
+        # Tüm analizleri çalıştır  
+        tanimlayici = self.tanimlayici_istatistikler(bolum_adi)  
+        trend = self.trend_analizi(bolum_adi)  
+        volatilite = self.volatilite_analizi(bolum_adi)  
+        kontenjan = self.kontenjan_analizi(bolum_adi)         
+        if any(x is None for x in [tanimlayici, trend, volatilite, kontenjan]):  
+            return None               
+        # Sonuçları birleştir  
+        kapsamli_sonuc = {  
+            'bolum': bolum_adi,  
+            'tanimlayici': tanimlayici,  
+            'trend': trend,  
+            'volatilite': volatilite,  
+            'kontenjan': kontenjan  
+        }            
+        # Analiz özeti yazdır  
+        self.analiz_ozeti_yazdir(kapsamli_sonuc)       
+        return kapsamli_sonuc
+    def analiz_ozeti_yazdir(self, sonuc):
+        """Analiz sonuçlarının özetini yazdırır"""  
+        t = sonuc['tanimlayici']  
+        tr = sonuc['trend']  
+        v = sonuc['volatilite']  
+        k = sonuc['kontenjan']            
+        print(f"\n📊 TANIMLAYICI İSTATİSTİKLER")  
+        print(f"   Ortalama Sıralama: {t['ortalama']:.0f}")  
+        print(f"   Medyan Sıralama: {t['medyan']:.0f}")  
+        print(f"   Standart Sapma: {t['std_sapma']:.0f}")  
+        print(f"   Min-Max: {t['min_siralama']:.0f} - {t['max_siralama']:.0f}")  
+        print(f"   Varyasyon Katsayısı: %{t['varyasyon_katsayisi']:.1f}")            
+        print(f"\n📈 TREND ANALİZİ")  
+        print(f"   Trend Yönü: {tr['trend_yonu']}")  
+        print(f"   Yıllık Değişim: {tr['yillik_degisim']:.2f}")  
+        print(f"   R² Skoru: {tr['r2_score']:.3f}")  
+        print(f"   2025 Tahmini: {tr['gelecek_tahmin_2025']:.0f}")  
+        print(f"   2026 Tahmini: {tr['gelecek_tahmin_2026']:.0f}")         
+        print(f"\n⚠️  VOLATİLİTE ANALİZİ")  
+        print(f"   Risk Kategorisi: {v['risk_kategorisi']}")  
+        print(f"   Volatilite: {v['volatilite']:.3f}")  
+        print(f"   %95 Güven Aralığı: {v['guven_araligi_alt']:.0f} - {v['guven_araligi_ust']:.0f}")  
+        print(f"   Max Dalgalanma: {v['maksimum_dalgalanma']:.0f}")            
+        print(f"\n👥 KONTENJAN ANALİZİ")  
+        print(f"   Kontenjan-Sıralama Korelasyon: {k['kontenjan_siralama_korelasyon']:.3f}")  
+        print(f"   Ortalama Kontenjan: {k['ortalama_kontenjan']:.0f}")  
+        print(f"   Son Yıl Kontenjan: {k['son_yil_kontenjan']}")  
+        print(f"   Kontenjan Trendi: {k['kontenjan_trend']}")
+    def gorsellik_olustur(self, bolum_adi):
+        """  
+        Bölüm için görselleştirmeler oluşturur          
+        Parameters:  
+        bolum_adi (str): Görselleştirme yapılacak bölüm adı  
+        """  
+        bolum_verisi = self.veri[self.veri['Bolum'] == bolum_adi].copy()  
+        bolum_verisi = bolum_verisi.sort_values('Yil')            
+        # 2x2 subplot oluştur  
+        fig, axes = plt.subplots(2, 2, figsize=(15, 12))  
+        fig.suptitle(f'{bolum_adi} - Detaylı Analiz', fontsize=16, fontweight='bold')            
+        # 1. Sıralama Trendi  
+        axes[0,0].plot(bolum_verisi['Yil'], bolum_verisi['Siralama'],   
+                      marker='o', linewidth=2, markersize=8)  
+        axes[0,0].set_title('Sıralama Trendi')  
+        axes[0,0].set_xlabel('Yıl')  
+        axes[0,0].set_ylabel('Sıralama')  
+        axes[0,0].grid(True, alpha=0.3)          
+        # Trend çizgisi ekle  
+        x = bolum_verisi['Yil'].values.reshape(-1, 1)  
+        y = bolum_verisi['Siralama'].values  
+        model = LinearRegression()  
+        model.fit(x, y)  
+        y_pred = model.predict(x)  
+        axes[0,0].plot(bolum_verisi['Yil'], y_pred, '--', color='red', alpha=0.7)            
+        # 2. Kontenjan vs Sıralama  
+        axes[0,1].scatter(bolum_verisi['Kontenjan'], bolum_verisi['Siralama'],   
+                         s=100, alpha=0.7, c=bolum_verisi['Yil'], cmap='viridis')  
+        axes[0,1].set_title('Kontenjan vs Sıralama')  
+        axes[0,1].set_xlabel('Kontenjan')  
+        axes[0,1].set_ylabel('Sıralama')  
+        axes[0,1].grid(True, alpha=0.3)            
+        # 3. Yıllık Değişim Oranları  
+        yillik_degisim = bolum_verisi['Siralama'].pct_change().dropna() * 100  
+        axes[1,0].bar(bolum_verisi['Yil'].iloc[1:], yillik_degisim, alpha=0.7)  
+        axes[1,0].set_title('Yıllık Değişim Oranları (%)')  
+        axes[1,0].set_xlabel('Yıl')  
+        axes[1,0].set_ylabel('Değişim (%)')  
+        axes[1,0].axhline(y=0, color='red', linestyle='--', alpha=0.5)  
+        axes[1,0].grid(True, alpha=0.3)            
+        # 4. Box Plot  
+        axes[1,1].boxplot([bolum_verisi['Siralama']], labels=[bolum_adi.split(' - ')[0]])  
+        axes[1,1].set_title('Sıralama Dağılımı')  
+        axes[1,1].set_ylabel('Sıralama')  
+        axes[1,1].grid(True, alpha=0.3)            
+        plt.tight_layout()  
+        plt.show()
+    def tercih_oneris_hesapla(self, ogrenci_siralama, hedef_bolumler):
+        """  
+        Öğrenci sıralamasına göre tercih önerisi hesaplar            
+        Parameters:  
+        ogrenci_siralama (int): Öğrencinin sıralaması  
+        hedef_bolumler (list): Hedef bölümler listesi            
+        Returns:  
+        dict: Tercih önerileri  
+        """  
+        oneriler = {  
+            'guvenli': [],  
+            'orta_riskli': [],  
+            'riskli': []  
+        }         
+        for bolum in hedef_bolumler:  
+            if bolum not in self.veri['Bolum'].values:  
+                continue              
+            # Son 3 yılın ortalaması ve volatilitesi  
+            bolum_verisi = self.veri[self.veri['Bolum'] == bolum]  
+            son_3_yil = bolum_verisi.nlargest(3, 'Yil')['Siralama']        
+            ortalama_siralama = son_3_yil.mean()  
+            std_sapma = son_3_yil.std()                
+            # Güven aralığı hesapla  
+            alt_sinir = ortalama_siralama - (1.5 * std_sapma)  
+            ust_sinir = ortalama_siralama + (1.5 * std_sapma)                
+            # Kategori belirleme  
+            if ogrenci_siralama < alt_sinir:  
+                kategori = 'guvenli'  
+            elif ogrenci_siralama > ust_sinir:  
+                kategori = 'riskli'  
+            else:  
+                kategori = 'orta_riskli'                    
+            oneriler[kategori].append({  
+                'bolum': bolum,  
+                'ortalama_siralama': ortalama_siralama,  
+                'yerlesme_ihtimali': self.yerlesme_ihtimali_hesapla(ogrenci_siralama, son_3_yil),  
+                'risk_skoru': abs(ogrenci_siralama - ortalama_siralama) / std_sapma if std_sapma > 0 else 0  
+            })                
+        # Her kategoriyi risk skoruna göre sırala  
+        for kategori in oneriler:  
+            oneriler[kategori] = sorted(oneriler[kategori], key=lambda x: x['risk_skoru'])                
+        return oneriler
+    def yerlesme_ihtimali_hesapla(self, ogrenci_siralama, gecmis_sirlamalar):
+        """Yerleşme ihtimalini hesaplar"""  
+        daha_iyi_yil_sayisi = sum(1 for s in gecmis_sirlamalar if ogrenci_siralama <= s)  
+        return (daha_iyi_yil_sayisi / len(gecmis_sirlamalar)) * 100
+    def rapor_olustur(self, bolum_listesi, dosya_adi="yks_analiz_raporu.txt"):
+        """  
+        Çoklu bölüm için analiz raporu oluşturur           
+        Parameters:  
+        bolum_listesi (list): Analiz edilecek bölümler  
+        dosya_adi (str): Rapor dosya adı  
+        """  
+        with open(dosya_adi, 'w', encoding='utf-8') as f:  
+            f.write("YKS TERCİH ANALİZ RAPORU\n")  
+            f.write("=" * 50 + "\n\n")                
+            for bolum in bolum_listesi:  
+                if bolum not in self.veri['Bolum'].values:  
+                    continue                        
+                f.write(f"\n📋 {bolum}\n")  
+                f.write("-" * 40 + "\n")                    
+                # Temel istatistikler  
+                stats = self.tanimlayici_istatistikler(bolum)  
+                trend = self.trend_analizi(bolum)              
+                if stats and trend:  
+                    f.write(f"Ortalama Sıralama: {stats['ortalama']:.0f}\n")  
+                    f.write(f"Son 5 Yıl Trendi: {trend['trend_yonu']}\n")  
+                    f.write(f"2025 Tahmini: {trend['gelecek_tahmin_2025']:.0f}\n")  
+                    f.write(f"Risk Kategorisi: {self.volatilite_analizi(bolum)['risk_kategorisi']}\n")  
+                    f.write("\n")                        
+        print(f"Rapor '{dosya_adi}' dosyasına kaydedildi!")
+    def grafik_ciz(self, bolum_adi):
+        veriler = self.veri[self.veri['Bolum'] == bolum_adi].sort_values('Yil')
+        plt.figure(figsize=(10,5))
+        sns.lineplot(data=veriler, x='Yil', y='Siralama', marker='o', label='Sıralama')
+        plt.title(f"{bolum_adi} - Yıllara Göre Sıralama")
+        plt.ylabel("Sıralama (Düşük daha iyi)")
+        plt.xlabel("Yıl")
+        plt.gca().invert_yaxis()
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+def demo_calistir():
+    """Demo fonksiyonu - programın nasıl kullanılacağını gösterir"""
+    print("🎯 YKS TERCİH VERİ ANALİZ PROGRAMI")
+    print("=" * 50)
+    # Analiz nesnesini oluştur  
+    analiz = YKSTercihAnalizi()  
+    # Örnek veri yükle  
+    analiz.veri_yukle()  
+    print("\n📋 Mevcut Bölümler:")  
+    for i, bolum in enumerate(analiz.veri['Bolum'].unique(), 1):  
+        print(f"{i}. {bolum}")  
+    # Örnek analizler  
+    ornek_bolum = "Bilgisayar Mühendisliği - İTÜ"  
+    print(f"\n🔍 Örnek Analiz: {ornek_bolum}")  
+    kapsamli_sonuc = analiz.kapsamli_analiz(ornek_bolum)  
+    # Görselleştirme  
+    print("\n📊 Görselleştirme oluşturuluyor...")  
+    analiz.gorsellik_olustur(ornek_bolum)  
+    # Tercih önerisi örneği  
+    print("\n💡 Tercih Önerisi Örneği (50,000 sıralama için):")  
+    hedef_bolumler = list(analiz.veri['Bolum'].unique()[:5])  
+    oneriler = analiz.tercih_oneris_hesapla(50000, hedef_bolumler)  
+    for kategori, bolumler in oneriler.items():  
+        if bolumler:  
+            print(f"\n{kategori.upper()} KATEGORİSİ:")  
+            for bolum_info in bolumler[:2]:  # İlk 2 öneriyi göster  
+                print(f"  • {bolum_info['bolum']}")  
+                print(f"    Yerleşme İhtimali: %{bolum_info['yerlesme_ihtimali']:.1f}")  
+    # Rapor oluştur  
+    analiz.rapor_olustur(list(analiz.veri['Bolum'].unique()[:3]))  
+    return analiz
+
+# Programı çalıştır
+if __name__ == "__main__":
+    analiz_sistemi = demo_calistir()
+Bu kod, YKS (Yükseköğretim Kurumları Sınavı) tercih analizi yapan kapsamlı bir Python programıdır. Türkiye'de üniversite tercihi yapacak öğrenciler için geliştirilmiş bir veri analiz aracıdır. Öğrencilerin üniversite bölümlerine yerleşme şansını istatistiksel yöntemlerle değerlendirmek için tasarlanmıştır.
+Ana Özellikler:
+İstatistiksel Analizler:
+CSV dosyalarından veri yükleme veya otomatik örnek veri üretme.
+- Bölümlerin geçmiş yıllardaki taban puanları/sıralamalarının analizi
+- Tanımlayıcı istatistikler (ortalama, medyan, standart sapma)
+- Trend analizi ve gelecek tahminleri
+Gelişmiş Analiz Yöntemleri:
+- Linear regression ile trend tahmini: Lineer regresyonla sıralama trendi ve gelecek tahmini (2025-2026). Ancak burada güncelleme yapılması gerekir.  Zira Sınavı Geçerli Kişi Sayısı/Önlisans veya Lisansa Ait Toplam Kontenjan Sayısına göre analiz yapılması gerekir.  
+- Volatilite ve risk analizi: Risk kategorizasyonu (%95 güven aralığı, dalgalanma ölçümü).
+- Kontenjan etkisi analizi: Kontenjan-sıralama korelasyonu ve kontenjan değişim trendi.
+- Hareketli ortalama hesaplamaları
+Tercih Önerileri:
+- Öğrenci sıralamasına göre kategorize edilmiş öneriler:
+  - Güvenli: Yerleşme ihtimali yüksek
+  - Orta riskli: Dengeli seçenekler  
+  - Riskli: Şansa bağlı
